@@ -3,7 +3,7 @@ const router = express.Router();
 const Book = require('../models/books.js');
 
 // Get all books with sorting and filtering
-router.get('/', async (req, res) => {
+router.get('/', async (req, res) => {   
     try {
         const { sortBy, order, author, category } = req.query;
 
@@ -43,6 +43,28 @@ router.get('/:id', async (req, res) => {
         const book = await Book.findById(req.params.id);
         if (!book) return res.status(404).json({ message: 'Book not found' });
         res.json(book);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Update a book by ID
+router.put('/:id', async (req, res) => {
+    try {
+        const { title, author, category, rating, description, price, publicationDate } = req.body;
+
+        // Find and update the book
+        const updatedBook = await Book.findByIdAndUpdate(
+            req.params.id,
+            { title, author, category, rating, description, price, publicationDate },
+            { new: true, runValidators: true } // Return the updated document and validate
+        );
+
+        if (!updatedBook) {
+            return res.status(404).json({ message: 'Book not found' });
+        }
+
+        res.json({ message: 'Book updated successfully', book: updatedBook });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
