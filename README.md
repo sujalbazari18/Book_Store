@@ -4,7 +4,7 @@
 ![Express.js](https://img.shields.io/badge/Express.js-404D59?style=for-the-badge)
 ![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)
 
-A robust RESTful API for managing a book store inventory, offering comprehensive CRUD operations with sorting and filtering capabilities.
+A robust RESTful API for managing a book store inventory, offering comprehensive CRUD operations with sorting and filtering capabilities. The API includes user authentication with JWT.
 
 ## Table of Contents
 
@@ -16,6 +16,7 @@ A robust RESTful API for managing a book store inventory, offering comprehensive
   - [Installation](#installation)
   - [Environment Configuration](#environment-configuration)
 - [API Documentation](#api-documentation)
+  - [Authentication Endpoints](#authentication-endpoints)
   - [Books Endpoints](#books-endpoints)
   - [Query Parameters](#query-parameters)
   - [Examples](#examples)
@@ -25,20 +26,19 @@ A robust RESTful API for managing a book store inventory, offering comprehensive
 
 ## Overview
 
-This Book Store API provides a backend solution for managing book inventory. The API enables users to create, read, update, and delete books, as well as sort and filter the collection based on various attributes such as price, rating, author, and category.
+This Book Store API provides a secure backend solution for managing book inventory. The API enables authenticated users to create, read, update, and delete books, as well as sort and filter the collection based on various attributes such as rating, author, and category.
 
 ## Features
 
+- **User Authentication**: Secure JWT-based authentication system
 - **Complete CRUD Operations**: Manage book records with create, read, update, and delete functionalities
-- **Advanced Sorting**: Sort books by:
-  - Price (ascending/descending)
-  - Rating (ascending/descending)
-  - Publication date (newest/oldest)
+- **Advanced Sorting**: Sort books by any field (ascending/descending)
 - **Flexible Filtering**: Filter books by:
   - Author
   - Category
 - **Combined Operations**: Apply both sorting and filtering simultaneously
 - **MongoDB Integration**: Efficient data storage and retrieval
+- **Secure Routes**: Protected endpoints requiring authentication
 
 ## Technologies
 
@@ -46,6 +46,8 @@ This Book Store API provides a backend solution for managing book inventory. The
 - **Express.js**: Web application framework
 - **MongoDB**: NoSQL database
 - **Mongoose**: Object Data Modeling (ODM) library for MongoDB
+- **JWT**: JSON Web Tokens for authentication
+- **bcrypt**: Password hashing
 - **dotenv**: Environment variable management
 
 ## Getting Started
@@ -77,7 +79,8 @@ npm install
 
 ```bash
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/bookstore
+JWT_SECRET=your_jwt_secret_key
+MONGODB_URI=mongodb://localhost:27017/bookstore
 ```
 
 2. Start the server:
@@ -98,6 +101,13 @@ http://localhost:5000/
 
 ## API Documentation
 
+### Authentication Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/users/register` | Register a new user |
+| POST | `/api/users/login` | Login and receive JWT token |
+
 ### Books Endpoints
 
 | Method | Endpoint | Description |
@@ -108,57 +118,95 @@ http://localhost:5000/
 | PUT | `/api/books/:id` | Update an existing book |
 | DELETE | `/api/books/:id` | Delete a book |
 
+**Note**: All book endpoints require authentication. Include the JWT token in the Authorization header using the format: `Bearer <token>`
+
 ### Query Parameters
 
 | Parameter | Description | Example |
 |-----------|-------------|---------|
-| `sortBy` | Field to sort by (price, rating, date) | `?sortBy=price` |
+| `sortBy` | Field to sort by (any book field) | `?sortBy=rating` |
 | `order` | Sort order (asc, desc) | `?order=desc` |
-| `author` | Filter by author name | `?author=SUJAL` |
+| `author` | Filter by author name | `?author=J.K. Rowling` |
 | `category` | Filter by book category | `?category=Fiction` |
 
 ### Examples
 
-**Get all books sorted by price (ascending):**
+**Register a new user:**
 ```
-GET http://localhost:5000/api/books?sortBy=price&order=asc
+POST http://localhost:5000/api/users/register
+```
+Body:
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword"
+}
+```
+
+**Login:**
+```
+POST http://localhost:5000/api/users/login
+```
+Body:
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword"
+}
+```
+Response:
+```json
+{
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Get all books sorted by rating (descending):**
+```
+GET http://localhost:5000/api/books?sortBy=rating&order=desc
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Get all books by a specific author:**
 ```
-GET http://localhost:5000/api/books?author=SUJAL
-```
-
-**Get all fiction books sorted by rating (descending):**
-```
-GET http://localhost:5000/api/books?category=Fiction&sortBy=rating&order=desc
+GET http://localhost:5000/api/books?author=J.K. Rowling
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Add a new book:**
 ```
 POST http://localhost:5000/api/books/add
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 Body:
 ```json
 {
   "title": "The Great Gatsby",
   "author": "F. Scott Fitzgerald",
-  "description": "A novel about the American Dream",
-  "price": 12.99,
-  "rating": 4.5,
   "category": "Fiction",
-  "publishDate": "1925-04-10"
+  "rating": 4.5,
+  "price": 12.99,
+  "publicationDate": "1925-04-10"
 }
 ```
 
 ## Database Schema
 
+### Book Schema
+
 The book schema includes the following fields:
 
 - `title`: String (required)
 - `author`: String (required)
-- `description`: String
-- `price`: Number (required)
-- `rating`: Number
-- `category`: String
-- `publishDate`: Date
+- `category`: String (required)
+- `rating`: Number (0-5)
+- `price`: Number
+- `publicationDate`: Date
+
+### User Schema
+
+The user schema includes the following fields:
+
+- `email`: String (required, unique)
+- `password`: String (required, hashed)
