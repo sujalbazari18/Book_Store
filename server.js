@@ -6,8 +6,8 @@ const bookRoutes = require('./routes/books');
 const app = express();
 const Port = process.env.PORT || 5000;
 
-// Connect to Database
-connectDB();
+// // Connect to Database
+// connectDB();
 
 // Middleware to parse JSON
 app.use(express.json());
