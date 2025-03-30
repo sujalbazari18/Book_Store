@@ -1,18 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const Book = require('../models/books.js');
+const authMiddleware = require('../middleware/authmiddleware.js');
 
-// Get all books with sorting and filtering
-router.get('/', async (req, res) => {   
+// Get all books with sorting and filtering (Protected)
+router.get('/', authMiddleware, async (req, res) => {
     try {
         const { sortBy, order, author, category } = req.query;
 
-        // Build query object
         let query = {};
         if (author) query.author = author;
         if (category) query.category = category;
 
-        // Build sort object
         let sortOptions = {};
         if (sortBy && order) {
             sortOptions[sortBy] = order === 'asc' ? 1 : -1;
@@ -25,8 +24,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Add a new book
-router.post('/add', async (req, res) => {
+// Add a new book (Protected)
+router.post('/add', authMiddleware, async (req, res) => {
     try {
         const { title, author, category, rating, description } = req.body;
         const newBook = new Book({ title, author, category, rating, description });
@@ -37,8 +36,8 @@ router.post('/add', async (req, res) => {
     }
 });
 
-// Get a book by ID
-router.get('/:id', async (req, res) => {
+// Get a book by ID (Protected)
+router.get('/:id', authMiddleware, async (req, res) => {
     try {
         const book = await Book.findById(req.params.id);
         if (!book) return res.status(404).json({ message: 'Book not found' });
@@ -48,16 +47,14 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Update a book by ID
-router.put('/:id', async (req, res) => {
+// Update a book by ID (Protected)
+router.put('/:id', authMiddleware, async (req, res) => {
     try {
         const { title, author, category, rating, description, price, publicationDate } = req.body;
-
-        // Find and update the book
         const updatedBook = await Book.findByIdAndUpdate(
             req.params.id,
             { title, author, category, rating, description, price, publicationDate },
-            { new: true, runValidators: true } // Return the updated document and validate
+            { new: true, runValidators: true }
         );
 
         if (!updatedBook) {
@@ -70,8 +67,8 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Delete a book by ID
-router.delete('/:id', async (req, res) => {
+// Delete a book by ID (Protected)
+router.delete('/:id', authMiddleware, async (req, res) => {
     try {
         const book = await Book.findByIdAndDelete(req.params.id);
         if (!book) return res.status(404).json({ message: 'Book not found' });
